@@ -29,7 +29,14 @@ class PagerConfig(
     var imageCropBorders = false
         private set
 
+    // //LOOPDEER CODE
+    var landscapeMode = 1
+        private set
     init {
+        preferences.landscapeMode()
+            .register({ landscapeMode = it })
+        // //THIS PART TOO ;)
+
         preferences.imageScaleType()
             .register({ imageScaleType = it }, { imagePropertyChangedListener?.invoke() })
 

@@ -53,6 +53,8 @@ class PreferencesHelper(val context: Context) {
         "backup"
     ).toUri()
 
+    fun landscapeMode() = flowPrefs.getInt(Keys.doublePageLandscape, 1) // //LOOPDEER PAGER
+
     fun startScreen() = prefs.getInt(Keys.startScreen, 1)
 
     fun confirmExit() = prefs.getBoolean(Keys.confirmExit, false)
