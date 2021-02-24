@@ -58,6 +58,13 @@ abstract class PagerViewer(val activity: ReaderActivity) : BaseViewer {
     private var awaitingIdleViewerChapters: ViewerChapters? = null
 
     /**
+     * Allows handling more then one page skip (for double pager)
+     */
+    val defaultPagesMoving: Int = 1
+    var numberOfPagesAdvancing: Int = defaultPagesMoving
+    var numberOfPagesRetreating: Int = defaultPagesMoving
+
+    /**
      * Whether the view pager is currently in idle mode. It sets the awaiting chapters if setting
      * this field to true.
      */
@@ -272,8 +279,8 @@ abstract class PagerViewer(val activity: ReaderActivity) : BaseViewer {
      * Moves to the page at the right.
      */
     protected open fun moveRight() {
-        if (pager.currentItem != adapter.count - 1) {
-            pager.setCurrentItem(pager.currentItem + 1, config.usePageTransitions)
+        if (pager.currentItem != adapter.count - numberOfPagesAdvancing) {
+            pager.setCurrentItem(pager.currentItem + numberOfPagesAdvancing, config.usePageTransitions)
         }
     }
 
@@ -281,8 +288,14 @@ abstract class PagerViewer(val activity: ReaderActivity) : BaseViewer {
      * Moves to the page at the left.
      */
     protected open fun moveLeft() {
-        if (pager.currentItem != 0) {
-            pager.setCurrentItem(pager.currentItem - 1, config.usePageTransitions)
+        // old condition was pager.currentItem != 0
+        // That means 0 is a valid page index, so we just have to make sure that
+        // the page we would end up on ISN'T below zero, but also allowed to be zero
+        // This does that, by saying
+        // "If the number the operation pager.currentItem - numberOfPagesRetreating
+        //          results in is above or equal to zero, then we will move to a valid position next line"
+        if ((pager.currentItem - numberOfPagesRetreating) >= 0) {
+            pager.setCurrentItem(pager.currentItem - numberOfPagesRetreating, config.usePageTransitions)
         }
     }
 

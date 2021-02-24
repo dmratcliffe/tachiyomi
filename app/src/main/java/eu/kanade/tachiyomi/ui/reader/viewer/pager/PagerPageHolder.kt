@@ -245,6 +245,9 @@ class PagerPageHolder(
                 if (viewer.config.dualPageSplit) {
                     openStream = processDualPageSplit(openStream!!)
                 }
+                if(true){//TODO: Config for dual page, also do we need to check if it works on animated images?
+                    openStream = handleDualPageing(openStream!!)
+                }
                 if (!isAnimated) {
                     initSubsamplingImageView().setImage(ImageSource.inputStream(openStream!!))
                 } else {
@@ -292,6 +295,30 @@ class PagerPageHolder(
     private fun onPageSplit() {
         val newPage = InsertPage(page)
         viewer.onPageSplit(page, newPage)
+    }
+
+    private fun handleDualPageing(currentPageStream: InputStream){
+
+        //is the current page a double page?
+        //  set Advancing to 1, no matter what, return current stream
+
+
+        //is the current page a single page (we get this after the above check)
+
+        //is the next page a single page?
+        //  Stitch this page and next page together
+        //  page advancement = 2
+        //else?
+        //  is it a double page? is it the last page in chapter?
+        //      stitch this page with null (one half blacked out, keeps consistent page positioning)
+        //      page advancement = 1 (DEFAULT!)
+
+
+        //page retreat determination
+        //if previousPage is double page
+        // page retreat = 1
+        //else
+        //  page retreat = 2
     }
 
     /**
