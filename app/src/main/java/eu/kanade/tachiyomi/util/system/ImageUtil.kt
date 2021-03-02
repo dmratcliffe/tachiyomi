@@ -144,6 +144,31 @@ object ImageUtil {
         return ByteArrayInputStream(output.toByteArray())
     }
 
+    fun stitchPages(curPageStream: InputStream, nextStream: InputStream?): InputStream {
+        val curImageBytes = curPageStream.readBytes()
+        val nextImageBytes = nextStream?.readBytes()
+
+        val curImageBitmap = BitmapFactory.decodeByteArray(curImageBytes, 0, curImageBytes.size)
+
+        val height = curImageBitmap.height
+        val width = curImageBitmap.width
+
+        var nextImageBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        if (nextStream != null && nextImageBytes != null) {
+            nextImageBitmap = BitmapFactory.decodeByteArray(nextImageBytes, 0, nextImageBytes.size)
+        }
+
+        val result = Bitmap.createBitmap(width * 2, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+
+        canvas.drawBitmap(curImageBitmap, 0f, 0f, null)
+        canvas.drawBitmap(nextImageBitmap, 0f, width * 1f, null)
+
+        val output = ByteArrayOutputStream()
+        result.compress(Bitmap.CompressFormat.JPEG, 100, output)
+        return ByteArrayInputStream(output.toByteArray())
+    }
+
     enum class Side {
         RIGHT, LEFT
     }

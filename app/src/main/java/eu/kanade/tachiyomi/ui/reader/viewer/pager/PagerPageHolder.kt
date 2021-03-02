@@ -245,8 +245,8 @@ class PagerPageHolder(
                 if (viewer.config.dualPageSplit) {
                     openStream = processDualPageSplit(openStream!!)
                 }
-                if(true){//TODO: Config for dual page, also do we need to check if it works on animated images?
-                    openStream = handleDualPageing(openStream!!)
+                if (true) { // TODO: Config for dual page, also do we need to check if it works on animated images?
+                    openStream = handleDualPaging(openStream!!)
                 }
                 if (!isAnimated) {
                     initSubsamplingImageView().setImage(ImageSource.inputStream(openStream!!))
@@ -297,28 +297,65 @@ class PagerPageHolder(
         viewer.onPageSplit(page, newPage)
     }
 
-    private fun handleDualPageing(currentPageStream: InputStream){
+    private fun handleDualPaging(currentPageStream: InputStream): InputStream {
+        var curPageStream = currentPageStream
 
-        //is the current page a double page?
-        //  set Advancing to 1, no matter what, return current stream
+        val (isDoublePage, stream) = ImageUtil.isDoublePage(curPageStream) // Don't need to check for input pages!
+        curPageStream = stream
 
+        // is the current page a double page?
+        if (isDoublePage) {
+            //  set Advancing to 1, no matter what,
+            setAdvanceRetreat(viewer.defaultPagesMoving, page.index)
+            //  RETURN current stream
+            return curPageStream
+        }
 
-        //is the current page a single page (we get this after the above check)
+        // is the current page a single page (we get this after the above check)
 
-        //is the next page a single page?
-        //  Stitch this page and next page together
+        // try to fetch the next page, return current page if broken.
+        val nextIndex = page.index + 1
+        val nextStreamFn = page.chapter.pages?.get(nextIndex)?.stream
+        var nextStream: InputStream = nextStreamFn?.let { it() }?.buffered(16) ?: curPageStream
+        // TODO: Return a blank page on fail, or some signle of failure
+
+        // if failed to get next page (error, doesn't exist, etc
+        //  page advancement = 1
+        //  stitch with null
+
+        val (nextisDoublePage, nxtStream) = ImageUtil.isDoublePage(nextStream)
+
+        // is the next page a single page?
         //  page advancement = 2
-        //else?
-        //  is it a double page? is it the last page in chapter?
-        //      stitch this page with null (one half blacked out, keeps consistent page positioning)
+        //  page retreat = call fun to determine?
+        if (!nextisDoublePage) {
+            setAdvanceRetreat(2, page.index)
+            return ImageUtil.stitchPages(curPageStream, nxtStream)
+        }
+
+        //  return: Stitch this page and next page together
+
+        // is it a double page? is it the last page in chapter?
         //      page advancement = 1 (DEFAULT!)
+        //      page retreat = call fun to determine?
+        //      return: stitch this page with null (one half blacked out, keeps consistent page positioning)
+        if (nextisDoublePage) {
+            setAdvanceRetreat(1, page.index)
+            return ImageUtil.stitchPages(curPageStream, null)
+        }
 
-
-        //page retreat determination
-        //if previousPage is double page
+        // page retreat determination
+        // if previousPage is double page
         // page retreat = 1
-        //else
+        // else
         //  page retreat = 2
+
+        return curPageStream
+    }
+
+    private fun setAdvanceRetreat(advance: Int, curIndex: Int) {
+        viewer.numberOfPagesAdvancing = advance
+        viewer.numberOfPagesRetreating = 1
     }
 
     /**
